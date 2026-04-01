@@ -96,9 +96,32 @@
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 12px 16px;
-      margin-bottom: 18px;
+      padding: 10px 8px;
+      margin-bottom: 8px;
     }
+    .date-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .date-nav {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      color: #4fc3f7;
+      font-size: 22px;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      line-height: 1;
+    }
+    .date-nav:hover { background: rgba(79,195,247,0.12); }
+    .date-nav:disabled { opacity: 0.25; cursor: default; }
     .date-label { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
     .date-value { font-size: 14px; font-weight: 700; color: white; }
     .status-chip {
@@ -295,8 +318,14 @@
     </header>
 
     <div class="date-bar">
-      <span class="date-label">TODAY</span>
-      <span class="date-value" id="date-val">—</span>
+      <button class="date-nav" id="prev-day">‹</button>
+      <div class="date-center">
+        <span class="date-label" id="date-label">TODAY</span>
+        <span class="date-value" id="date-val">—</span>
+      </div>
+      <button class="date-nav" id="next-day">›</button>
+    </div>
+    <div style="display:flex; justify-content:center; margin-top:-10px; margin-bottom:18px;">
       <span class="status-chip" id="status-chip">—</span>
     </div>
 
@@ -399,29 +428,63 @@
 
   <script>
     const EKINET = 'https://www.eki-net.com/Personal/reserve/wb/RouteSearchConditionInput/Index';
-
-    const now = new Date();
-    const dow = now.getDay();
     const DAY = ['日','月','火','水','木','金','土'];
-    const ds = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} (${DAY[dow]})`;
-    document.getElementById('date-val').textContent = ds;
 
-    const chip = document.getElementById('status-chip');
-    if (dow === 0 || dow === 6) {
-      chip.textContent = '土日運休';
-      chip.classList.add('ng');
-      document.getElementById('holiday-banner').classList.add('show');
-    } else {
-      chip.textContent = '平日 運行';
-      chip.classList.add('ok');
+    // 選択中の日付（0 = 今日、1 = 明日...）
+    let offset = 0;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    function getSelectedDate() {
+      const d = new Date(today);
+      d.setDate(d.getDate() + offset);
+      return d;
     }
 
-    const nowMin = now.getHours() * 60 + now.getMinutes();
-    document.querySelectorAll('.train-card').forEach(card => {
-      const [h, m] = card.dataset.dep.split(':').map(Number);
-      if (h * 60 + m < nowMin) card.classList.add('past');
+    function isToday() { return offset === 0; }
+
+    function updateUI() {
+      const d = getSelectedDate();
+      const dow = d.getDay();
+      const isWeekend = (dow === 0 || dow === 6);
+
+      // 日付表示
+      const dateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} (${DAY[dow]})`;
+      document.getElementById('date-val').textContent = dateStr;
+      document.getElementById('date-label').textContent = isToday() ? 'TODAY' : offset === 1 ? 'TOMORROW' : `+${offset}日`;
+
+      // 前へボタン：今日より前には戻れない
+      document.getElementById('prev-day').disabled = (offset === 0);
+
+      // 平日/土日ステータス
+      const chip = document.getElementById('status-chip');
+      chip.className = 'status-chip ' + (isWeekend ? 'ng' : 'ok');
+      chip.textContent = isWeekend ? '土日運休' : '平日 運行';
+
+      // 土日バナー
+      const banner = document.getElementById('holiday-banner');
+      banner.classList.toggle('show', isWeekend);
+
+      // 列車カードのグレーアウト（今日のみ時刻チェック、他の日は全部アクティブ）
+      const now = new Date();
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+      document.querySelectorAll('.train-card').forEach(card => {
+        const [h, m] = card.dataset.dep.split(':').map(Number);
+        const isPast = isToday() && (h * 60 + m < nowMin);
+        card.classList.toggle('past', isPast);
+      });
+    }
+
+    // ナビゲーション
+    document.getElementById('prev-day').addEventListener('click', () => {
+      if (offset > 0) { offset--; updateUI(); }
+    });
+    document.getElementById('next-day').addEventListener('click', () => {
+      offset++;
+      updateUI();
     });
 
+    // トースト
     function toast(msg) {
       const t = document.getElementById('toast');
       t.textContent = msg;
@@ -429,16 +492,19 @@
       setTimeout(() => t.classList.remove('show'), 2400);
     }
 
+    // タップ → えきねっと
     document.querySelectorAll('.train-card').forEach(card => {
       card.addEventListener('click', () => {
         window.open(EKINET, '_blank');
         toast('✓ えきねっとを開きました');
       });
     });
-
     document.getElementById('footer-btn').addEventListener('click', () => {
       window.open(EKINET, '_blank');
     });
+
+    // 初期表示
+    updateUI();
   </script>
 </body>
 </html>
