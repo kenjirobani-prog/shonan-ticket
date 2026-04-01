@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>特急湘南 チケット</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=DM+Mono:wght@400;500&display=swap');
+
+    :root {
+      --dark: #0d1b2a;
+      --card: #111e2e;
+      --muted: #5a7a96;
+      --border: rgba(255,255,255,0.07);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      background: var(--dark);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .wave-bg {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 220px;
+      background: linear-gradient(180deg, #0a3f64 0%, #1363a3 55%, transparent 100%);
+      z-index: 0;
+      pointer-events: none;
+    }
+    .wave-bg::after {
+      content: '';
+      position: absolute;
+      bottom: -20px;
+      left: -40%;
+      width: 180%;
+      height: 50px;
+      background: var(--dark);
+      border-radius: 50%;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 430px;
+      padding: 0 16px 48px;
+    }
+
+    header {
+      text-align: center;
+      padding: 36px 0 24px;
+      color: white;
+    }
+
+    .route-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 99px;
+      padding: 5px 14px 5px 10px;
+      font-size: 12px;
+      font-family: 'DM Mono', monospace;
+      color: #c5e8ff;
+      margin-bottom: 10px;
+      letter-spacing: 0.04em;
+    }
+    .live-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #4fc3f7;
+      box-shadow: 0 0 0 0 rgba(79,195,247,0.5);
+      animation: ping 2s ease-in-out infinite;
+    }
+    @keyframes ping {
+      0%   { box-shadow: 0 0 0 0 rgba(79,195,247,0.5); }
+      60%  { box-shadow: 0 0 0 7px rgba(79,195,247,0); }
+      100% { box-shadow: 0 0 0 0 rgba(79,195,247,0); }
+    }
+
+    h1 { font-size: 30px; font-weight: 900; letter-spacing: -0.02em; line-height: 1.1; }
+    h1 em { color: #4fc3f7; font-style: normal; }
+    .subtitle { font-size: 12px; color: #a0c4de; margin-top: 5px; }
+
+    .date-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 16px;
+      margin-bottom: 18px;
+    }
+    .date-label { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+    .date-value { font-size: 14px; font-weight: 700; color: white; }
+    .status-chip {
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 99px;
+    }
+    .status-chip.ok { background: rgba(79,195,247,0.12); color: #4fc3f7; border: 1px solid rgba(79,195,247,0.2); }
+    .status-chip.ng { background: rgba(255,100,60,0.12); color: #ff7d5a; border: 1px solid rgba(255,100,60,0.2); }
+
+    .holiday-banner {
+      background: rgba(255,90,50,0.08);
+      border: 1px solid rgba(255,90,50,0.25);
+      border-radius: 12px;
+      padding: 13px 16px;
+      display: none;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .holiday-banner.show { display: flex; }
+    .holiday-banner .ico { font-size: 18px; margin-top: 1px; }
+    .holiday-banner p { font-size: 13px; color: #ff8c70; line-height: 1.5; }
+    .holiday-banner strong { color: #ffaa88; }
+
+    .hour-group { margin-bottom: 14px; }
+    .hour-head {
+      font-size: 10px;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      text-transform: uppercase;
+      padding: 0 2px;
+      margin-bottom: 7px;
+    }
+
+    .train-card {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 13px 15px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      color: white;
+      transition: background 0.15s, border-color 0.15s, transform 0.12s;
+      position: relative;
+      overflow: hidden;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .train-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, #4fc3f7, #1777bb);
+      border-radius: 3px 0 0 3px;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .train-card:active { background: #162738; transform: scale(0.985); }
+    .train-card:hover::before, .train-card:active::before { opacity: 1; }
+    .train-card.past { opacity: 0.28; pointer-events: none; }
+
+    .dep-time {
+      font-family: 'DM Mono', monospace;
+      font-size: 28px;
+      font-weight: 500;
+      line-height: 1;
+      min-width: 72px;
+      color: white;
+    }
+    .dep-time small {
+      font-size: 11px;
+      color: var(--muted);
+      display: block;
+      margin-top: 3px;
+      font-weight: 400;
+    }
+
+    .train-info { flex: 1; padding: 0 10px; }
+    .train-name { font-size: 15px; font-weight: 700; color: #ddeeff; }
+    .train-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .arr-chip {
+      background: rgba(79,195,247,0.1);
+      border: 1px solid rgba(79,195,247,0.18);
+      border-radius: 5px;
+      padding: 1px 6px;
+      font-size: 10px;
+      color: #4fc3f7;
+      font-family: 'DM Mono', monospace;
+    }
+    .pass-chip {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 5px;
+      padding: 1px 6px;
+      font-size: 10px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+    }
+
+    .arrow {
+      font-size: 20px;
+      color: rgba(255,255,255,0.18);
+      transition: color 0.15s, transform 0.15s;
+    }
+    .train-card:hover .arrow, .train-card:active .arrow {
+      color: #4fc3f7;
+      transform: translateX(3px);
+    }
+
+    .empty-row {
+      text-align: center;
+      padding: 16px;
+      font-size: 12px;
+      color: var(--muted);
+      border: 1px dashed rgba(255,255,255,0.07);
+      border-radius: 12px;
+      font-family: 'DM Mono', monospace;
+      margin-bottom: 14px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #1a3450;
+      border: 1px solid rgba(79,195,247,0.3);
+      border-radius: 12px;
+      padding: 12px 22px;
+      font-size: 13px;
+      color: #c5e8ff;
+      white-space: nowrap;
+      z-index: 999;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    .footer-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 15px;
+      background: rgba(26,119,187,0.12);
+      border: 1px solid rgba(26,119,187,0.28);
+      border-radius: 14px;
+      color: #4fc3f7;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      transition: background 0.15s;
+      margin-top: 6px;
+      cursor: pointer;
+    }
+    .footer-btn:hover { background: rgba(26,119,187,0.22); }
+
+    .note {
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 14px;
+      line-height: 1.8;
+      font-family: 'DM Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="wave-bg"></div>
+
+  <div class="container">
+    <header>
+      <div class="route-pill"><div class="live-dot"></div>藤沢 → 大崎</div>
+      <h1>特急<em>湘南</em><br>チケット購入</h1>
+      <p class="subtitle">タップしてえきねっとへ</p>
+    </header>
+
+    <div class="date-bar">
+      <span class="date-label">TODAY</span>
+      <span class="date-value" id="date-val">—</span>
+      <span class="status-chip" id="status-chip">—</span>
+    </div>
+
+    <div class="holiday-banner" id="holiday-banner">
+      <span class="ico">🌊</span>
+      <p>特急湘南は<strong>土曜・休日運休</strong>です。<br>今日は乗車できません。</p>
+    </div>
+
+    <div class="hour-group">
+      <div class="hour-head">06 時台</div>
+      <div class="train-card" data-dep="06:54">
+        <div class="dep-time">6:54<small>発</small></div>
+        <div class="train-info">
+          <div class="train-name">湘南 22号</div>
+          <div class="train-sub">大崎着 <span class="arr-chip">7:32</span> 新宿方面</div>
+        </div>
+        <span class="arrow">›</span>
+      </div>
+    </div>
+
+    <div class="hour-group">
+      <div class="hour-head">07 時台</div>
+      <div class="train-card" data-dep="07:11">
+        <div class="dep-time">7:11<small>発</small></div>
+        <div class="train-info">
+          <div class="train-name">湘南 6号</div>
+          <div class="train-sub">東京方面 <span class="pass-chip">大崎通過</span></div>
+        </div>
+        <span class="arrow">›</span>
+      </div>
+      <div class="train-card" data-dep="07:23">
+        <div class="dep-time">7:23<small>発</small></div>
+        <div class="train-info">
+          <div class="train-name">湘南 8号</div>
+          <div class="train-sub">東京方面 <span class="pass-chip">大崎通過</span></div>
+        </div>
+        <span class="arrow">›</span>
+      </div>
+      <div class="train-card" data-dep="07:45">
+        <div class="dep-time">7:45<small>発</small></div>
+        <div class="train-info">
+          <div class="train-name">湘南 24号</div>
+          <div class="train-sub">大崎着 <span class="arr-chip">8:23</span> 新宿方面</div>
+        </div>
+        <span class="arrow">›</span>
+      </div>
+    </div>
+
+    <div class="hour-group">
+      <div class="hour-head">08 時台</div>
+      <div class="train-card" data-dep="08:00">
+        <div class="dep-time">8:00<small>発</small></div>
+        <div class="train-info">
+          <div class="train-name">湘南 10号</div>
+          <div class="train-sub">東京方面 <span class="pass-chip">大崎通過</span></div>
+        </div>
+        <span class="arrow">›</span>
+      </div>
+      <div class="train-card" data-dep="08:11">
+        <div class="dep-time">8:11<small>発</small></div>
+        <div class="train-info">
+          <div class="train-name">湘南 26号</div>
+          <div class="train-sub">大崎着 <span class="arr-chip">8:49</span> 新宿方面</div>
+        </div>
+        <span class="arrow">›</span>
+      </div>
+      <div class="train-card" data-dep="08:32">
+        <div class="dep-time">8:32<small>発</small></div>
+        <div class="train-info">
+          <div class="train-name">湘南 12号</div>
+          <div class="train-sub">品川・東京方面 <span class="pass-chip">大崎通過</span></div>
+        </div>
+        <span class="arrow">›</span>
+      </div>
+      <div class="train-card" data-dep="08:58">
+        <div class="dep-time">8:58<small>発</small></div>
+        <div class="train-info">
+          <div class="train-name">湘南 14号</div>
+          <div class="train-sub">品川・東京方面 <span class="pass-chip">大崎通過</span></div>
+        </div>
+        <span class="arrow">›</span>
+      </div>
+    </div>
+
+    <div class="hour-group">
+      <div class="hour-head">09 時台</div>
+      <div class="empty-row">9時台の藤沢発 大崎行きなし</div>
+    </div>
+
+    <div class="footer-btn" id="footer-btn">えきねっと で購入 →</div>
+
+    <p class="note">
+      ★ 大崎停車は新宿方面（偶数号）のみ<br>
+      ★ 平日のみ運行（土・休日運休）<br>
+      ★ 2026年3月16日改正ダイヤ
+    </p>
+  </div>
+
+  <div class="toast" id="toast">✓ えきねっとを開きました</div>
+
+  <script>
+    const EKINET = 'https://www.eki-net.com/Personal/reserve/wb/RouteSearchConditionInput/Index';
+
+    const now = new Date();
+    const dow = now.getDay();
+    const DAY = ['日','月','火','水','木','金','土'];
+    const ds = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} (${DAY[dow]})`;
+    document.getElementById('date-val').textContent = ds;
+
+    const chip = document.getElementById('status-chip');
+    if (dow === 0 || dow === 6) {
+      chip.textContent = '土日運休';
+      chip.classList.add('ng');
+      document.getElementById('holiday-banner').classList.add('show');
+    } else {
+      chip.textContent = '平日 運行';
+      chip.classList.add('ok');
+    }
+
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    document.querySelectorAll('.train-card').forEach(card => {
+      const [h, m] = card.dataset.dep.split(':').map(Number);
+      if (h * 60 + m < nowMin) card.classList.add('past');
+    });
+
+    function toast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2400);
+    }
+
+    document.querySelectorAll('.train-card').forEach(card => {
+      card.addEventListener('click', () => {
+        window.open(EKINET, '_blank');
+        toast('✓ えきねっとを開きました');
+      });
+    });
+
+    document.getElementById('footer-btn').addEventListener('click', () => {
+      window.open(EKINET, '_blank');
+    });
+  </script>
+</body>
+</html>
