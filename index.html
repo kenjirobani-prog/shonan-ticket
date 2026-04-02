@@ -297,6 +297,45 @@
     }
     .footer-btn:hover { background: rgba(26,119,187,0.22); }
 
+    .bookmarklet-section {
+      background: var(--card);
+      border: 1px solid rgba(79,195,247,0.15);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .bookmarklet-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #4fc3f7;
+      margin-bottom: 6px;
+    }
+    .bookmarklet-desc {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+    .bookmarklet-btn {
+      display: inline-block;
+      background: rgba(79,195,247,0.12);
+      border: 1px solid rgba(79,195,247,0.3);
+      border-radius: 10px;
+      padding: 10px 18px;
+      color: #4fc3f7;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: grab;
+      margin-bottom: 8px;
+    }
+    .bookmarklet-note {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      line-height: 1.5;
+    }
+
     .note {
       text-align: center;
       font-size: 11px;
@@ -336,7 +375,7 @@
 
     <div class="hour-group">
       <div class="hour-head">06 時台</div>
-      <div class="train-card" data-dep="06:54">
+      <div class="train-card" data-dep="06:54" data-hour="6" data-minute="50">
         <div class="dep-time">6:54<small>発</small></div>
         <div class="train-info">
           <div class="train-name">湘南 22号</div>
@@ -348,7 +387,7 @@
 
     <div class="hour-group">
       <div class="hour-head">07 時台</div>
-      <div class="train-card" data-dep="07:11">
+      <div class="train-card" data-dep="07:11" data-hour="7" data-minute="10">
         <div class="dep-time">7:11<small>発</small></div>
         <div class="train-info">
           <div class="train-name">湘南 6号</div>
@@ -356,7 +395,7 @@
         </div>
         <span class="arrow">›</span>
       </div>
-      <div class="train-card" data-dep="07:23">
+      <div class="train-card" data-dep="07:23" data-hour="7" data-minute="20">
         <div class="dep-time">7:23<small>発</small></div>
         <div class="train-info">
           <div class="train-name">湘南 8号</div>
@@ -364,7 +403,7 @@
         </div>
         <span class="arrow">›</span>
       </div>
-      <div class="train-card" data-dep="07:45">
+      <div class="train-card" data-dep="07:45" data-hour="7" data-minute="45">
         <div class="dep-time">7:45<small>発</small></div>
         <div class="train-info">
           <div class="train-name">湘南 24号</div>
@@ -376,7 +415,7 @@
 
     <div class="hour-group">
       <div class="hour-head">08 時台</div>
-      <div class="train-card" data-dep="08:00">
+      <div class="train-card" data-dep="08:00" data-hour="8" data-minute="0">
         <div class="dep-time">8:00<small>発</small></div>
         <div class="train-info">
           <div class="train-name">湘南 10号</div>
@@ -384,7 +423,7 @@
         </div>
         <span class="arrow">›</span>
       </div>
-      <div class="train-card" data-dep="08:11">
+      <div class="train-card" data-dep="08:11" data-hour="8" data-minute="10">
         <div class="dep-time">8:11<small>発</small></div>
         <div class="train-info">
           <div class="train-name">湘南 26号</div>
@@ -392,7 +431,7 @@
         </div>
         <span class="arrow">›</span>
       </div>
-      <div class="train-card" data-dep="08:32">
+      <div class="train-card" data-dep="08:32" data-hour="8" data-minute="30">
         <div class="dep-time">8:32<small>発</small></div>
         <div class="train-info">
           <div class="train-name">湘南 12号</div>
@@ -400,7 +439,7 @@
         </div>
         <span class="arrow">›</span>
       </div>
-      <div class="train-card" data-dep="08:58">
+      <div class="train-card" data-dep="08:58" data-hour="8" data-minute="55">
         <div class="dep-time">8:58<small>発</small></div>
         <div class="train-info">
           <div class="train-name">湘南 14号</div>
@@ -415,6 +454,16 @@
       <div class="empty-row">9時台の藤沢発 大崎行きなし</div>
     </div>
 
+    <!-- ブックマークレット案内 -->
+    <div class="bookmarklet-section">
+      <div class="bookmarklet-label">🔖 初回セットアップ（1回だけ）</div>
+      <p class="bookmarklet-desc">下のボタンをChromeのブックマークバーにドラッグして登録してください。</p>
+      <a class="bookmarklet-btn" id="bookmarklet-link" href="BOOKMARKLET_PLACEHOLDER">
+        🚄 湘南を検索
+      </a>
+      <p class="bookmarklet-note">登録後は列車ボタン → えきねっとが開いたらこのブックマークを1クリック</p>
+    </div>
+
     <div class="footer-btn" id="footer-btn">えきねっと で購入 →</div>
 
     <p class="note">
@@ -427,10 +476,35 @@
   <div class="toast" id="toast">✓ えきねっとを開きました</div>
 
   <script>
-    const EKINET = 'https://www.eki-net.com/Personal/reserve/wb/RouteSearchConditionInput/Index';
     const DAY = ['日','月','火','水','木','金','土'];
 
-    // 選択中の日付（0 = 今日、1 = 明日...）
+    // ブックマークレットのコード（えきねっと上で動く）
+    const BOOKMARKLET_CODE = `javascript:(function(){
+      var h = location.hash.replace('#shonan=','');
+      if(!h){ alert('shonan-ticketから開いてください'); return; }
+      var parts = h.split(',');
+      var date = parts[0], hour = parts[1], minute = parts[2];
+      function wait(){
+        var geton = document.querySelector('#form_station_geton');
+        if(!geton){ setTimeout(wait,300); return; }
+        geton.value = '藤沢';
+        document.querySelector('#form_station_getoff').value = '大崎';
+        var dateEl = document.querySelector('[name="form_date_oneway_date"]');
+        var hourEl = document.querySelector('[name="form_date_oneway_hour"]');
+        var minEl  = document.querySelector('[name="form_date_oneway_minute"]');
+        if(!dateEl||!hourEl||!minEl){ setTimeout(wait,300); return; }
+        dateEl.value = date;
+        hourEl.value = hour;
+        minEl.value  = minute;
+        document.querySelector('#top_formSearchSubmit').click();
+      }
+      wait();
+    })();`;
+
+    // ブックマークレットリンクにセット
+    document.getElementById('bookmarklet-link').href = BOOKMARKLET_CODE;
+
+    // ── 日付管理 ──
     let offset = 0;
     const today = new Date();
     today.setHours(0,0,0,0);
@@ -441,41 +515,32 @@
       return d;
     }
 
-    function isToday() { return offset === 0; }
-
     function updateUI() {
       const d = getSelectedDate();
       const dow = d.getDay();
       const isWeekend = (dow === 0 || dow === 6);
 
-      // 日付表示
       const dateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} (${DAY[dow]})`;
       document.getElementById('date-val').textContent = dateStr;
-      document.getElementById('date-label').textContent = isToday() ? 'TODAY' : offset === 1 ? 'TOMORROW' : `+${offset}日`;
+      document.getElementById('date-label').textContent = offset === 0 ? 'TODAY' : offset === 1 ? 'TOMORROW' : `+${offset}日`;
 
-      // 前へボタン：今日より前には戻れない
       document.getElementById('prev-day').disabled = (offset === 0);
 
-      // 平日/土日ステータス
       const chip = document.getElementById('status-chip');
       chip.className = 'status-chip ' + (isWeekend ? 'ng' : 'ok');
       chip.textContent = isWeekend ? '土日運休' : '平日 運行';
 
-      // 土日バナー
-      const banner = document.getElementById('holiday-banner');
-      banner.classList.toggle('show', isWeekend);
+      document.getElementById('holiday-banner').classList.toggle('show', isWeekend);
 
-      // 列車カードのグレーアウト（今日のみ時刻チェック、他の日は全部アクティブ）
       const now = new Date();
       const nowMin = now.getHours() * 60 + now.getMinutes();
       document.querySelectorAll('.train-card').forEach(card => {
         const [h, m] = card.dataset.dep.split(':').map(Number);
-        const isPast = isToday() && (h * 60 + m < nowMin);
+        const isPast = (offset === 0) && (h * 60 + m < nowMin);
         card.classList.toggle('past', isPast);
       });
     }
 
-    // ナビゲーション
     document.getElementById('prev-day').addEventListener('click', () => {
       if (offset > 0) { offset--; updateUI(); }
     });
@@ -484,26 +549,32 @@
       updateUI();
     });
 
-    // トースト
+    // ── トースト ──
     function toast(msg) {
       const t = document.getElementById('toast');
       t.textContent = msg;
       t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2400);
+      setTimeout(() => t.classList.remove('show'), 3000);
     }
 
-    // タップ → えきねっと
+    // ── 列車タップ → えきねっトをhash付きで別タブで開く ──
     document.querySelectorAll('.train-card').forEach(card => {
       card.addEventListener('click', () => {
-        window.open(EKINET, '_blank');
-        toast('✓ えきねっとを開きました');
+        const d = getSelectedDate();
+        const dateStr = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+        const hour   = card.dataset.hour;
+        const minute = card.dataset.minute;
+        const hash   = `#shonan=${dateStr},${hour},${minute}`;
+        const url    = `https://www.eki-net.com/Personal/reserve/wb/RouteSearchConditionInput/Index${hash}`;
+        window.open(url, '_blank');
+        toast('✓ えきねっとを開きました\nブックマーク「🚄 湘南を検索」をクリック！');
       });
     });
+
     document.getElementById('footer-btn').addEventListener('click', () => {
-      window.open(EKINET, '_blank');
+      window.open('https://www.eki-net.com/Personal/reserve/wb/RouteSearchConditionInput/Index', '_blank');
     });
 
-    // 初期表示
     updateUI();
   </script>
 </body>
