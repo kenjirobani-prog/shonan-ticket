@@ -565,14 +565,14 @@
         const hour   = card.dataset.hour;
         const minute = card.dataset.minute;
         const hash   = `#shonan=${dateStr},${hour},${minute}`;
-        const url    = `https://www.eki-net.com/Personal/reserve/wb/RouteSearchConditionInput/Index${hash}`;
-        window.open(url, '_blank');
+        const url    = `googlechromes://www.eki-net.com/Personal/reserve/wb/RouteSearchConditionInput/Index${hash}`;
+        location.href = url;
         toast('✓ えきねっとを開きました\nブックマーク「🚄 湘南を検索」をクリック！');
       });
     });
 
     document.getElementById('footer-btn').addEventListener('click', () => {
-      window.open('https://www.eki-net.com/Personal/reserve/wb/RouteSearchConditionInput/Index', '_blank');
+      location.href = 'googlechromes://www.eki-net.com/Personal/reserve/wb/RouteSearchConditionInput/Index';
     });
 
     updateUI();
